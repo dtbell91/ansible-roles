@@ -1,0 +1,2 @@
+#!/bin/bash
+umask 0077; /usr/bin/mysqldump -AF > /data/mysql-backup.sql; chmod go-rwx /data/mysql-backup.sql;

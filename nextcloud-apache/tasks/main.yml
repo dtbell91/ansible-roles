@@ -1,0 +1,37 @@
+---
+- name: install required packages
+  apt: name={{item}} state=installed update_cache=yes cache_valid_time={{cache_valid_time}}
+  with_items:
+  - apache2
+  - apache2-utils
+  - libapache2-mod-php
+  - php7.0-gd
+  - php7.0-json
+  - php7.0-mysql
+  - php7.0-curl
+  - php7.0-mbstring
+  - php7.0-intl
+  - php7.0-mcrypt
+  - php-imagick
+  - php7.0-xml
+  - php7.0-zip
+  notify: restart apache
+- name: Remove default Apache vhost configuration
+  command: /usr/sbin/a2dissite 000-default removes=/etc/apache2/sites-enabled/000-default.conf
+  notify: restart apache
+- name: Create nextcloud Apache vhost configuration
+  template: src=nextcloud.conf.j2 dest=/etc/apache2/sites-available/nextcloud.conf
+  notify: restart apache
+- name: Enable Apache vhost for HTTPS
+  command: /usr/sbin/a2ensite nextcloud creates=/etc/apache2/sites-enabled/nextcloud.conf
+  notify: restart apache
+- name: Enable Apache modules for nextcloud
+  apache2_module: name={{item}} state=present
+  with_items:
+  - ssl
+  - headers
+  - rewrite
+  - env
+  - dir
+  - mime
+  notify: restart apache

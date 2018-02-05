@@ -1,0 +1,66 @@
+---
+- name: define Postfix virtual mailbox domain mapping
+  template: src=mysql-virtual-mailbox-domains.cf.j2 dest=/etc/postfix/mysql-virtual-mailbox-domains.cf mode=0640
+  notify: restart postfix
+- name: define Postfix virtual mailbox mapping
+  template: src=mysql-virtual-mailbox-maps.cf.j2 dest=/etc/postfix/mysql-virtual-mailbox-maps.cf mode=0640
+  notify: restart postfix
+- name: define Postfix virtual alias mapping
+  template: src=mysql-virtual-alias-maps.cf.j2 dest=/etc/postfix/mysql-virtual-alias-maps.cf mode=0640
+  notify: restart postfix
+- name: define Postfix email-to-email mapping (required for catchall domains)
+  template: src=mysql-email2email.cf.j2 dest=/etc/postfix/mysql-email2email.cf
+  notify: restart postfix
+- name: configure Postfix
+  template: src=main.cf.j2 dest=/etc/postfix/main.cf
+  notify: restart postfix
+- name: configure Postfix master process
+  copy: src=master.cf dest=/etc/postfix/master.cf
+  notify: restart postfix
+- name: Adding user postfix to opendkim group
+  user: name=postfix groups=opendkim append=yes
+  notify: restart postfix
+- name: Configure opendkim
+  copy: src=opendkim.conf dest=/etc/opendkim.conf
+  notify: restart opendkim
+- name: make opendkim config directory
+  file: path=/etc/opendkim state=directory owner=opendkim group=opendkim
+- name: make opendkim-keys directory on persistent storage
+  file: path=/data/opendkim-keys state=directory owner=opendkim group=opendkim mode=0700
+- name: symlink to opendkim-keys
+  file: src=/data/opendkim-keys dest=/etc/opendkim/keys state=link owner=opendkim group=opendkim mode=0700
+- name: make opendkim-keys belong to opendkim
+  file: path=/data/opendkim-keys mode=0700 owner=opendkim group=opendkim recurse=yes
+- name: configure opendkim key table
+  copy: src=key.table dest=/etc/opendkim/key.table owner=opendkim group=opendkim
+- name: configure opendkim signing table
+  copy: src=signing.table dest=/etc/opendkim/signing.table owner=opendkim group=opendkim
+- name: configure opendkim trusted hosts
+  template: src=trusted.hosts.j2 dest=/etc/opendkim/trusted.hosts owner=opendkim group=opendkim
+- name: create opendkim socket directory
+  file: path=/var/spool/postfix/opendkim owner=opendkim group=postfix state=directory
+- name: set opendkim socket
+  copy: src=etc-default-opendkim dest=/etc/default/opendkim
+- name: make directory for opendkim bug fix
+  file: path=/etc/systemd/system/opendkim.service.d state=directory
+- name: fix the Debian Stretch bug where it ignores the socket
+  copy: src=opendkim-override dest=/etc/systemd/system/opendkim.service.d/override.conf
+  notify:
+  - reload systemctl daemon
+  - restart opendkim
+- name: Enable opendkim at startup
+  service: name=opendkim enabled=yes
+- name: Setting spamass-milter options
+  copy: src=etc-default-spamass-milter dest=/etc/default/spamass-milter
+  notify: restart spamass-milter
+- name: Setting spamd options
+  copy: src=etc-default-spamassassin dest=/etc/default/spamassassin
+  notify: restart spamassassin
+- name: Install custom spamassassin rules
+  copy: src=sa-custom-rules.cf dest=/etc/spamassassin/custom-rules.cf
+  notify: restart spamassassin
+- name: Adding user spamass-milter to debian-spamd group
+  user: name=spamass-milter groups=debian-spamd
+  notify: restart spamassassin
+- name: Enabling spamd at startup
+  service: name=spamassassin enabled=yes

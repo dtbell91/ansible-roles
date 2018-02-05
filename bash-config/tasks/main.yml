@@ -1,0 +1,5 @@
+---
+- name: configure aliases
+  copy: src=10-aliases.sh dest=/etc/profile.d/
+- name: install dnsutils
+  apt: name=dnsutils state=installed update_cache=yes cache_valid_time={{cache_valid_time}}

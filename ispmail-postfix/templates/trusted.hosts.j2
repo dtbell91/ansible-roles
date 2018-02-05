@@ -1,0 +1,13 @@
+127.0.0.1
+::1
+localhost
+{% for ipv4 in ansible_all_ipv4_addresses %}
+{{ ipv4 }}
+{% endfor %}
+{% for ipv6 in ansible_all_ipv6_addresses %}
+{{ ipv6 }}
+{% endfor %}
+{{ ansible_fqdn }}
+{{ ansible_hostname }}
+{{ myhostname }}
+{{ ispmail_webmail_hostname }}

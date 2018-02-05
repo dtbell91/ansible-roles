@@ -1,0 +1,10 @@
+---
+- name: Setup cron job for FreeDNS update
+  cron:
+    name: "FreeDNS update"
+    job: "sleep 41 ; wget --no-check-certificate -O - {{ freedns_url }} >> /tmp/freedns.log 2>&1 &"
+    hour: "*"
+    minute: 3,8,13,18,23,28,33,38,43,48,53,58
+    day: "*"
+    user: root
+  notify: restart cron

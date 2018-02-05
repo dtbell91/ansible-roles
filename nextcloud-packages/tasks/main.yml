@@ -1,0 +1,47 @@
+---
+- name: check if Nextcloud is already downloaded
+  stat: path=/tmp/nextcloud-12.0.2.tar.bz2
+  register: nextcloudinstaller
+- name: download Nextcloud installer
+  get_url:
+    url: https://download.nextcloud.com/server/releases/nextcloud-12.0.2.tar.bz2
+    checksum: sha256:eb34d6cb9f55ee84bf2ad847b4b08cdb925321848ffa2264a9b1566e7b21a17c
+    dest: /tmp
+    validate_certs: yes
+  when: nextcloudinstaller.stat.exists == False
+- name: download Nextcloud installer signature
+  get_url:
+    url: https://download.nextcloud.com/server/releases/nextcloud-12.0.2.tar.bz2.asc
+    checksum: sha256:b36856348ccdd664aa9040520a7c76faca3372db5736db68a118b9ae9862c1a4
+    dest: /tmp
+    validate_certs: yes
+  when: nextcloudinstaller.stat.exists == False
+- name: download Nextcloud public key
+  get_url:
+    url: https://nextcloud.com/nextcloud.asc
+    checksum: sha256:ae5d6087ae037a673b9901c946a156b180744253375e2e18e1005e6310d95d55
+    dest: /tmp
+    validate_certs: yes
+  when: nextcloudinstaller.stat.exists == False
+- name: import Nextcloud public key
+  command: gpg --import /tmp/nextcloud.asc
+  when: nextcloudinstaller.stat.exists == False
+- name: check Nextcloud signature
+  command: gpg /tmp/nextcloud-12.0.2.tar.bz2.asc
+  when: nextcloudinstaller.stat.exists == False
+- name: extract Nextcloud installer
+  unarchive: src=/tmp/nextcloud-12.0.2.tar.bz2 dest=/tmp remote_src=yes
+  when: nextcloudinstaller.stat.exists == False
+- name: copy Nextcloud to www-root
+  command: cp -r /tmp/nextcloud /data/nextcloud-app creates=/data/nextcloud-app
+- name: set Nextcloud permissions
+  file: path="/data/nextcloud-app{{item.path}}" mode="{{item.mode}}" owner={{item.owner}} group={{item.group}} recurse={{item.recurse}}
+  with_items:
+  - { path: '/', mode: 'u=rwX,g=rX,o-rwx', owner: 'root', group: 'www-data', recurse: 'yes' }
+  - { path: '/', mode: '0755', owner: 'root', group: 'www-data', recurse: 'no'}
+  - { path: '/apps/', mode: 'u=rwX,g=rX,o-rwx', owner: 'www-data', group: 'www-data', recurse: 'yes'}
+  - { path: '/assets/', mode: 'u=rwX,g=rX,o-rwx', owner: 'www-data', group: 'www-data', recurse: 'yes'}
+  - { path: '/config/', mode: 'u=rwX,g=rX,o-rwx', owner: 'www-data', group: 'www-data', recurse: 'yes'}
+  - { path: '/themes/', mode: 'u=rwX,g=rX,o-rwx', owner: 'www-data', group: 'www-data', recurse: 'yes'}
+  - { path: '/updater/', mode: 'u=rwX,g=rX,o-rwx', owner: 'www-data', group: 'www-data', recurse: 'yes'}
+  - { path: '/.htaccess', mode: '0644', owner: 'root', group: 'www-data', recurse: 'no'}

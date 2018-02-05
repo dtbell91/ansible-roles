@@ -1,0 +1,34 @@
+---
+# Example variable setup:
+# github: git@github.com
+# default_git: "{{ github }}"
+# default_base_dir: ~/git
+# default_origin_owner: user-name
+# default_remote_owner: some-org
+# git_repos:
+#   - name: some-project
+#     remote:
+#       - name: upstream
+#   - name: some-other-project
+#     base_dir: ~/other-git-dir/subdir
+#     origin_server: git@git.someorg.com
+#     origin_owner: myotherusername
+#     remote:
+#       - name: upstream
+#         remote_owner: another-user
+
+- name: Make git base directories
+  file: path="{{ item.base_dir | default(default_base_dir) }}" state=directory
+  with_items: "{{ git_repos }}"
+
+- name: Setup origin git repos
+  git: repo={{ item.origin_server | default(default_git) }}:{{ item.origin_owner | default(default_origin_owner)}}/{{ item.name }}.git dest="{{ item.base_dir | default(default_base_dir) }}/{{ item.name }}" clone=yes
+  with_items: "{{ git_repos }}"
+
+- name: Add git repo remotes
+  include_tasks: git_remotes.yml base_dir="{{ item.0.base_dir | default(default_base_dir) }}" repo_name="{{ item.0.name }}" remote_name="{{ item.1.name }}" remote_url="{{ item.0.origin_server | default(default_git) }}:{{ item.1.remote_owner | default(default_remote_owner)}}/{{ item.0.name }}.git"
+  with_subelements:
+    - "{{ git_repos }}"
+    - remote
+    - flags:
+      skip_missing: True

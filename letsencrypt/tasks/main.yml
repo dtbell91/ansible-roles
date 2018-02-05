@@ -1,0 +1,24 @@
+---
+# - name: add jessie-backports repo
+#   apt_repository:
+#     repo: deb http://http.debian.net/debian jessie-backports main
+#     state: present
+
+- name: install certbot required binary packages
+  apt:
+    name: python-certbot-apache
+    # default_release: jessie-backports
+    state: installed
+    update_cache: yes
+    cache_valid_time: "{{cache_valid_time}}"
+
+- name: request letsencrypt cert
+  shell: "certbot -n --agree-tos --expand --email {{webmaster_address}} --apache certonly -d {{ letsencrypt_domains|join(',') }}"
+  args:
+    creates: "/etc/letsencrypt/live/{{letsencrypt_domains[0]}}/fullchain.pem"
+
+- name: renew letsencrypt cert
+  cron:
+    name: "letsencrypt certbot renewal"
+    job: "certbot renew"
+    special_time: weekly

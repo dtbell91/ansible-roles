@@ -1,0 +1,41 @@
+---
+# Sourced from http://everythingshouldbevirtual.com/ansible-playbook-lvm 2017-09-03
+- name: installing lvm2
+  apt: name=lvm2 state=present
+
+- name: installing scsitools
+  apt: name=scsitools state=present
+
+- name: rescanning for new disks
+  command: /sbin/rescan-scsi-bus
+
+- name: creating new LVM volume group
+  lvg: vg=datavg pvs={{ data_volume_block_device }} state=present
+
+- name: creating new LVM logical volume
+  lvol: vg=datavg lv=datalv size=100%FREE shrink=no
+
+- name: creating new filesystem on new LVM logical volume
+  filesystem: fstype=ext4 dev=/dev/datavg/datalv
+
+- name: mounting new filesystem
+  mount: name=/data src=/dev/datavg/datalv fstype=ext4 state=mounted
+
+# - name: extending existing LVM volume group
+#   lvg: vg={{ extend_vgname }} pvs={{ extend_disks }}
+#   when: extend and config_lvm
+#
+# - name: extending existing filesystem
+#   command: lvextend {{ lvextend_options }} /dev/{{ extend_vgname }}/{{ extend_lvname }}
+#   when: extend and config_lvm
+#
+# - name: resizing filesystem
+#   command: resize2fs /dev/{{ resize_vgname }}/{{ resize_lvname }}
+#   when: resize and config_lvm
+# Manual resize commands (after resizing the EBS):
+# pvresize /dev/xvdb
+# pvscan # confirm resize has worked
+# lvextend -L+5G /dev/datavg/datalv # change the size to the increased capacity amount
+# resize2fs /dev/datavg/datalv
+# df -h # confirm the total size is accurate
+# reboot now # reboot so you know everything is happy

@@ -1,0 +1,11 @@
+---
+# To find some IPs to block:
+# zgrep Found /var/log/fail2ban.lo* | grep Found | sed 's/.*Found \([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)/\1/p' | sort | uniq -c | sort -rn
+- name: write iptables rules
+  template: src=iptables.up.rules.j2 dest=/etc/iptables.up.rules mode="0600"
+  notify:
+  - restore iptables
+  - restart fail2ban
+
+- name: load iptables rules on startup
+  file: src=if-pre-up.d_iptables dest=/etc/network/if-pre-up.d/iptables mode="0755"

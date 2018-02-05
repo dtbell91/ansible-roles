@@ -1,0 +1,30 @@
+---
+- name: install required binary packages
+  apt: name={{item}} state=installed update_cache=yes cache_valid_time={{cache_valid_time}}
+  with_items:
+  - postfix
+  - postfix-mysql
+  # - swaks
+  - dovecot-mysql
+  - dovecot-pop3d
+  - dovecot-imapd
+  - dovecot-lmtpd
+  - dovecot-managesieved
+  - spamass-milter
+  - spamassassin
+  - pwgen
+  - patch
+  - opendkim
+  - opendkim-tools
+  - postfix-policyd-spf-python
+  - postfix-pcre
+- name: purge Exim installation
+  apt: name={{item}} state=absent purge=yes
+  with_items:
+  - exim4
+  - exim4-base
+  - exim4-config
+  - exim4-daemon-light
+
+- name: make sure mysql-server is started
+  service: name=mysql enabled=yes state=started

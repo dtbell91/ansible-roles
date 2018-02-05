@@ -1,0 +1,36 @@
+---
+- name: Install MySQL Server
+  apt: pkg=mysql-server state=installed
+- name: Installing required Python mysqldb module for Ansible to manage databases
+  apt: pkg=python-mysqldb state=installed
+- name: Create data directory
+  file: state=directory path={{ mysql_data_dir }} owner={{ mysql_user }} group={{ mysql_group }} mode=0700
+- name: Create configuration file
+  template: src=my.cnf.j2 dest=/etc/mysql/my.cnf owner=root group=root mode=0644
+
+- name: Check if data directory is new
+  shell: test "$(ls /data/mysql/)"
+  register: new_data_dir
+  changed_when: false
+  ignore_errors: yes
+- name: Stop MySQL from running
+  service: name=mysql state=stopped
+  when: "new_data_dir.rc != 0"
+- name: Initialise mysql data directory
+  command: mysql_install_db
+  when: "new_data_dir.rc != 0"
+- name: Start MySQL service
+  service: name=mysql state=started
+  when: "new_data_dir.rc != 0"
+
+- name: Securing root account
+  mysql_user: name=root password={{mysql_root_password}} state=present host=localhost
+- name: Creating my-cnf for root user
+  template: src=root-my.cnf.j2 dest=/root/.my.cnf mode=0600
+- name: Remove anonymous users
+  raw: mysql -e "DELETE FROM mysql.user WHERE user='';"
+- name: Set root permission
+  raw: mysql -e "DELETE FROM mysql.user WHERE user='root' AND host!='localhost';"
+
+- name: restart mysql
+  service: name=mysql state=restarted

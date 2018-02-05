@@ -1,0 +1,29 @@
+---
+- name: make Nextcloud data directory
+  file: path=/data/nextcloud state=directory owner=www-data group=www-data mode="u=rwX,g=rX,o-rwx"
+- name: check for existing config
+  stat: path=/data/nextcloud-app/config/config.php
+  register: nextcloudconfig
+- name: configure Nextcloud
+  command: sudo -u www-data php occ maintenance:install --database "mysql" --database-name {{nextcloud_mysql_name|quote}}  --database-user "root" --database-pass {{mysql_root_password|quote}} --admin-user {{nextcloud_admin_username|quote}} --admin-pass {{nextcloud_admin_password|quote}} --data-dir /data/nextcloud
+  args:
+    chdir: /data/nextcloud-app
+  when: nextcloudconfig.stat.exists == False
+- name: set trusted domain
+  command: sudo -u www-data php occ config:system:set --value nextcloud.bell.id.au trusted_domains 0
+  args:
+    chdir: /data/nextcloud-app
+  when: nextcloudconfig.stat.exists == False
+- name: install pip
+  apt: name={{item}} state=installed update_cache=yes cache_valid_time={{cache_valid_time}}
+  with_items:
+    - python-pip # used to install pip modules required
+    - virtualenv # used to install pip modules required
+- name: install pexpect to respond to prompts
+  pip: name=pexpect
+- name: reset Nextcloud admin password
+  expect:
+    command: sudo -u www-data php occ user:resetpassword {{nextcloud_admin_username|quote}}
+    chdir: /data/nextcloud-app
+    responses:
+      (?i)password: "{{nextcloud_admin_password|quote}}"

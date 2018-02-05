@@ -1,0 +1,11 @@
+---
+- name: "{{ repo_name }}: Check remote exists"
+  command: git remote get-url {{ remote_name }} chdir="{{ base_dir }}/{{ repo_name }}" warn=false
+  register: remote_exists
+  changed_when: false
+  ignore_errors: true
+  failed_when: false
+
+- name: "{{ repo_name }}: Add remote"
+  command: git remote add {{ remote_name }} {{ remote_url }} chdir="{{ base_dir }}/{{ repo_name }}"
+  when: "remote_exists.rc != 0"

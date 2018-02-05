@@ -1,0 +1,21 @@
+---
+# Generate a password hash with this command
+# python -c "import os,string,getpass,crypt;
+# randomsalt = os.urandom(16).encode('base-64');
+# password = getpass.getpass('Enter a password: ');
+# print crypt.crypt(password, '\$6\$%s\$' % randomsalt)"
+
+- name: Create davidb user
+  user:
+    name: davidb
+    comment: "David Bell"
+    append: yes
+    groups: sudo
+    password: "{{ davidb_password_hash }}"
+    shell: /bin/bash
+
+- name: Add davidb ssh pub key
+  authorized_key:
+    user: davidb
+    exclusive: yes
+    key: "{{ davidb_ssh_pubkey }}"

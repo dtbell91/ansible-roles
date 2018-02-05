@@ -1,0 +1,31 @@
+---
+- name: Check if Roundcube log already exists
+  stat: path=/var/log/user.log
+  register: roundcubelog
+
+- name: touch roundcube log
+  file: path=/var/log/user.log state=touch owner=root mode=600
+  when: roundcubelog.stat.exists == False
+
+- name: ensure fail2ban is installed
+  apt: name=fail2ban state=installed update_cache=yes cache_valid_time={{cache_valid_time}}
+  notify:
+    - restart fail2ban
+
+- name: copy custom filters
+  copy: src={{item}} dest=/etc/fail2ban/filter.d/
+  with_items:
+    - postfix-openrelay.conf
+  notify:
+    - restart fail2ban
+
+- name: ensure fail2ban is configured
+  template: src={{ item }}.j2 dest=/etc/fail2ban/{{ item }}
+  with_items:
+    - jail.local
+    - fail2ban.local
+  notify:
+    - restart fail2ban
+
+- name: ensure fail2ban starts on a fresh reboot
+  service: name=fail2ban state=started enabled=yes

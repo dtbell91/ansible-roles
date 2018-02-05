@@ -1,0 +1,20 @@
+- name: Install required binary packages
+  apt: name={{item}} state=installed
+  with_items:
+  - apache2
+  - libapache2-mod-php
+  notify: restart apache
+- name: Enable Apache SSL and Headers modules
+  apache2_module: name={{item}} state=present
+  with_items:
+  - ssl
+  - headers
+- name: Remove default Apache vhost configuration
+  command: /usr/sbin/a2dissite 000-default removes=/etc/apache2/sites-enabled/000-default.conf
+  notify: restart apache
+- name: Create Apache vhost configuration for HTTPS (RoundCube and PHPmyadmin)
+  template: src=webmail.conf.j2 dest=/etc/apache2/sites-available/webmail.conf
+  notify: restart apache
+- name: Enable Apache vhost for HTTPS
+  command: /usr/sbin/a2ensite webmail creates=/etc/apache2/sites-enabled/webmail.conf
+  notify: restart apache

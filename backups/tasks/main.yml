@@ -1,0 +1,78 @@
+---
+- name: check if duplicity is already downloaded
+  stat: path=/tmp/duplicity-0.7.14.tar.gz
+  register: duplicityinstaller
+- name: check if duply is already downloaded
+  stat: path=/tmp/duply_2.0.3.tgz
+  register: duplyinstaller
+- name: Download duplicity tarball
+  get_url:
+    url: https://code.launchpad.net/duplicity/0.7-series/0.7.14/+download/duplicity-0.7.14.tar.gz
+    checksum: sha256:7a3eb74a2a36b004b10add2970b37cfbac0bd693d79513e6311c8e4b8c3dd73e
+    dest: /tmp
+  when: duplicityinstaller.stat.exists == False
+- name: Download duply tarball
+  get_url:
+    url: https://sourceforge.net/projects/ftplicity/files/duply%20%28simple%20duplicity%29/2.0.x/duply_2.0.3.tgz
+    checksum: sha256:34b4c544a92faf190c29cbc9eda5f1420ae1550fc7e0a33126a1775d3187b9e1
+    dest: /tmp
+  when: duplyinstaller.stat.exists == False
+- name: Extract duplicity
+  unarchive: src=/tmp/duplicity-0.7.14.tar.gz dest=/tmp remote_src=yes
+- name: Extract duply
+  unarchive: src=/tmp/duply_2.0.3.tgz dest=/tmp remote_src=yes
+- name: Install duplicity and duply dependencies
+  apt: name={{item}} state=installed update_cache=yes cache_valid_time={{cache_valid_time}}
+  with_items:
+    - librsync1
+    - python-pip # used to install pip modules required
+    - virtualenv # used to install pip modules required
+    - python-dev
+    - librsync-dev
+    - intltool
+- name: Install duplicity and duply Python dependencies
+  pip: name={{item}}
+  with_items:
+    - fasteners
+    - boto
+- name: Install duplicity
+  command: python setup.py install
+  args:
+    chdir: /tmp/duplicity-0.7.14
+- name: Install duply
+  command: cp /tmp/duply_2.0.3/duply /usr/local/bin creates=/usr/local/bin/duply
+- name: Make Duply config directory
+  file: path=/data/duply/backup state=directory mode="0700"
+- name: Make Duply config symlink
+  file: src=/data/duply/ dest=/root/.duply state=link mode="0700"
+- name: Configure duply
+  template: src=conf.j2 dest=/data/duply/backup/conf mode="0600"
+- name: Configure Duply exclusions
+  copy: src=exclude dest=/data/duply/backup/exclude mode="0600"
+- name: Configure Duply pre script
+  copy: src=pre dest=/data/duply/backup/pre mode="0700"
+- name: Make Duply tmp directory
+  file: path=/data/tmp state=directory mode="0700"
+- name: Make Duply cache directory
+  file: path=/data/duply/cache state=directory mode="0700"
+- name: Schedule backups
+  cron:
+    name: "duply daily backup"
+    job: "/usr/local/bin/duply backup backup_purgeIncr --force"
+    hour: 1,13
+    minute: 0
+    day: "*"
+    user: root
+  notify: restart cron
+- name: set crontab path
+  cron:
+    env: yes
+    name: PATH
+    value: /usr/bin:/bin:/usr/local/bin
+  notify: restart cron
+- name: set crontab mailto
+  cron:
+    env: yes
+    name: MAILTO
+    value: david-cloudcrontab@bell.id.au
+  notify: restart cron

@@ -1,0 +1,16 @@
+---
+- name: Install git
+  apt: name=git state=installed update_cache=yes cache_valid_time={{cache_valid_time}}
+- name: Make directory for content
+  file: path=/var/www/david.bell.id.au state=directory
+- name: Clone website from Github
+  git: repo="https://github.com/dtbell91/david.bell.id.au.git" dest=/var/www/david.bell.id.au depth=1 force=yes
+- name: Remove default Apache vhost configuration
+  command: /usr/sbin/a2dissite 000-default removes=/etc/apache2/sites-enabled/000-default.conf
+  notify: restart apache
+- name: Create david.bell.id.au Apache vhost configuration
+  template: src=david.bell.id.au.conf.j2 dest=/etc/apache2/sites-available/david.bell.id.au.conf
+  notify: restart apache
+- name: Enable Apache vhost for david.bell.id.au
+  command: /usr/sbin/a2ensite david.bell.id.au creates=/etc/apache2/sites-enabled/david.bell.id.au.conf
+  notify: restart apache

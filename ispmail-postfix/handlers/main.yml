@@ -1,0 +1,15 @@
+---
+- name: restart postfix
+  service: name=postfix state=restarted
+
+- name: restart spamassassin
+  service: name=spamassassin state=restarted
+
+- name: restart spamass-milter
+  service: name=spamass-milter state=restarted
+
+- name: restart opendkim
+  service: name=opendkim state=restarted
+
+- name: reload systemctl daemon
+  command: systemctl daemon-reload

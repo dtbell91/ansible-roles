@@ -1,0 +1,101 @@
+# RBL Rules
+# RCVD_IN_BL_SPAMCOP_NET
+# RCVD_IN_BRBL_LASTEXT
+# URIBL_ABUSE_SURBL
+# URIBL_BLACK
+# URIBL_DBL_SPAM
+# URIBL_SBL
+# URIBL_SBL_A
+
+meta      DB_1_RBLS                     (RCVD_IN_BL_SPAMCOP_NET + RCVD_IN_BRBL_LASTEXT + URIBL_ABUSE_SURBL + URIBL_BLACK + URIBL_DBL_SPAM + URIBL_SBL + URIBL_SBL_A) > 0
+score     DB_1_RBLS                     0.1
+describe  DB_1_RBLS                     Message hit ANY RBL
+
+meta      DB_2_RBLS                     (RCVD_IN_BL_SPAMCOP_NET + RCVD_IN_BRBL_LASTEXT + URIBL_ABUSE_SURBL + URIBL_BLACK + URIBL_DBL_SPAM + URIBL_SBL + URIBL_SBL_A) > 1
+score     DB_2_RBLS                     1.0
+describe  DB_2_RBLS                     Message hits two RBLs
+
+meta      DB_3_RBLS                     (RCVD_IN_BL_SPAMCOP_NET + RCVD_IN_BRBL_LASTEXT + URIBL_ABUSE_SURBL + URIBL_BLACK + URIBL_DBL_SPAM + URIBL_SBL + URIBL_SBL_A) > 2
+score     DB_3_RBLS                     0.7
+describe  DB_3_RBLS                     Message hits three RBLs
+
+meta      DB_4_RBLS                     (RCVD_IN_BL_SPAMCOP_NET + RCVD_IN_BRBL_LASTEXT + URIBL_ABUSE_SURBL + URIBL_BLACK + URIBL_DBL_SPAM + URIBL_SBL + URIBL_SBL_A) > 3
+score     DB_4_RBLS                     0.5
+describe  DB_4_RBLS                     Message hits four RBLs
+
+meta      DB_5_RBLS                     (RCVD_IN_BL_SPAMCOP_NET + RCVD_IN_BRBL_LASTEXT + URIBL_ABUSE_SURBL + URIBL_BLACK + URIBL_DBL_SPAM + URIBL_SBL + URIBL_SBL_A) > 4
+score     DB_5_RBLS                     0.5
+describe  DB_5_RBLS                     Message hits five RBLs
+
+# Custom rules
+
+uri       DB_SHAREPOINT_LINK            /^https:\/\/[a-z0-9]+\-my\.sharepoint\.com\/personal\/[a-z0-9\_\/]+\/guestaccess\.aspx\?/i
+score     DB_SHAREPOINT_LINK            10.0
+describe  DB_SHAREPOINT_LINK            Suspicious Sharepoint link
+
+meta      DB_SHORT_IMAGEURI_AND_DNSBL   (HTML_SHORT_LINK_IMG_1 && DB_1_RBLS && __BODY_URI_ONLY)
+score     DB_SHORT_IMAGEURI_AND_DNSBL   2.0
+describe  DB_SHORT_IMAGEURI_AND_DNSBL   Short message with blacklisted link on an image
+
+meta      DB_HUSH_SHORT_IMGURI          (__HUSH_HUSH && HTML_SHORT_LINK_IMG_1 && HTML_IMAGE_RATIO_02)
+score     DB_HUSH_SHORT_IMGURI          2.5
+describe  DB_HUSH_SHORT_IMGURI          Short hush hush message with image
+
+meta      DB_LOTTERY_IMAGEURI_DNSBL     (__AFF_LOTTERY && HTML_SHORT_LINK_IMG_1 && DB_1_RBLS)
+score     DB_LOTTERY_IMAGEURI_DNSBL     2.0
+describe  DB_LOTTERY_IMAGEURI_DNSBL     Short lottery message with blacklisted link on an image
+
+meta      DB_IMG_LINK_ONLY              (HTML_SHORT_LINK_IMG_1 && __BODY_URI_ONLY && __EMPTY_BODY)
+score     DB_IMG_LINK_ONLY              1.0
+describe  DB_IMG_LINK_ONLY              Link on image only
+
+meta      DB_LOTSOFMONEY_SUBJ           (__FRAUD_DBI && __LOTSA_MONEY_00 && __NUMBERS_IN_SUBJ)
+score     DB_LOTSOFMONEY_SUBJ           1.0
+describe  DB_LOTSOFMONEY_SUBJ           Lots of money and numbers in subject
+
+# Bitcoin rules
+
+body      DB_BITCOIN_BODY               /bitcoin/i
+score     DB_BITCOIN_BODY               0.5
+describe  DB_BITCOIN_BODY               Bitcoin in body
+
+header    DB_BITCOIN_SUBJ               Subject =~ /bitcoin/i
+score     DB_BITCOIN_SUBJ               0.5
+describe  DB_BITCOIN_SUBJ               Bitcoin in subject
+
+meta      __DB_BITCOIN                  (DB_BITCOIN_BODY || DB_BITCOIN_SUBJ)
+
+meta      DB_BTC_RBL                    (__DB_BITCOIN && (DB_1_RBLS || __DB_DODGY_TLD))
+score     DB_BTC_RBL                    5.0
+describe  DB_BTC_RBL                    Contains Bitcoin and hit at least one RBL OR dodgy TLD
+
+meta      DB_LOTSOFMONEY_BTC            (__DB_BITCOIN && DB_LOTSOFMONEY_SUBJ)
+score     DB_LOTSOFMONEY_BTC            3.0
+describe  DB_LOTSOFMONEY_BTC            Bitcoin and numbers in subject, lots of money
+
+meta      DB_BTC_LINK_IMG               (DB_LOTSOFMONEY_BTC && DB_IMG_LINK_ONLY)
+score     DB_BTC_LINK_IMG               5.0
+describe  DB_BTC_LINK_IMG               Bitcoin email with only a link on an image
+
+# I've never received a legitimate email from or containing .ru or .ua link
+uri       DB_DODGY_TLD_URI              /^[a-z]+?:\/\/[^\/]+\.(?:ua|ru)\//i
+score     DB_DODGY_TLD_URI              2.0
+describe  DB_DODGY_TLD_URI              Dodgy TLD in URI
+
+header    DB_DODGY_TLD_FROM             From:addr =~ /\.(?:ua|ru)$/i
+score     DB_DODGY_TLD_FROM             5.0
+describe  DB_DODGY_TLD_FROM             Dodgy TLD in From header
+
+meta      __DB_DODGY_TLD                (DB_DODGY_TLD_URI || DB_DODGY_TLD_FROM)
+
+meta      DB_RBL_DODGY_TLD              (DB_1_RBLS && __DB_DODGY_TLD)
+score     DB_RBL_DODGY_TLD              2.0
+describe  DB_RBL_DODGY_TLD              RBL hit and dodgy TLD
+
+# Negative rules
+
+header    __DB_REDENERGY_FROM           From:addr =~ /(?:\.|\@)redenergy\.com\.au$/i
+
+meta      DB_REDENERGY_LEGIT            (SPF_PASS && __DB_REDENERGY_FROM)
+score     DB_REDENERGY_LEGIT            -10.0
+describe  DB_REDENERGY_LEGIT            Legitimate email from Red Energy
