@@ -1,4 +1,6 @@
 ---
+# The official GitLab install instructions for Debian want you to `curl ... | sudo bash` which is _terrible_
+# We're going to install the required dependencies, add the apt key, the apt repo, then install GitLab
 - name: Install gitlab dependencies
   apt: name={{item}} state=installed update_cache=yes cache_valid_time={{cache_valid_time}}
   with_items:
@@ -11,18 +13,23 @@
   apt_key: url=https://packages.gitlab.com/gitlab/gitlab-ee/gpgkey state=present id=14219A96E15E78F4
 - name: Add GitLab repo
   apt_repository: repo="deb https://packages.gitlab.com/gitlab/gitlab-ee/debian/ stretch main" state=present
-- name: 
+- name: Install GitLab package
+  apt: name="gitlab-ee" state=installed update_cache=yes
+  environment: 
+    external_url: "{{ gitlab_external_url }}"
 
-- name: Make directory for content
-  file: path=/var/www/david.bell.id.au state=directory
-- name: Clone website from Github
-  git: repo="https://github.com/dtbell91/david.bell.id.au.git" dest=/var/www/david.bell.id.au depth=1 force=yes
-- name: Remove default Apache vhost configuration
-  command: /usr/sbin/a2dissite 000-default removes=/etc/apache2/sites-enabled/000-default.conf
-  notify: restart apache
-- name: Create david.bell.id.au Apache vhost configuration
-  template: src=david.bell.id.au.conf.j2 dest=/etc/apache2/sites-available/david.bell.id.au.conf
-  notify: restart apache
-- name: Enable Apache vhost for david.bell.id.au
-  command: /usr/sbin/a2ensite david.bell.id.au creates=/etc/apache2/sites-enabled/david.bell.id.au.conf
-  notify: restart apache
+# https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/files/gitlab-config-template/gitlab.rb.template
+
+# - name: Make directory for content
+#   file: path=/var/www/david.bell.id.au state=directory
+# - name: Clone website from Github
+#   git: repo="https://github.com/dtbell91/david.bell.id.au.git" dest=/var/www/david.bell.id.au depth=1 force=yes
+# - name: Remove default Apache vhost configuration
+#   command: /usr/sbin/a2dissite 000-default removes=/etc/apache2/sites-enabled/000-default.conf
+#   notify: restart apache
+# - name: Create david.bell.id.au Apache vhost configuration
+#   template: src=david.bell.id.au.conf.j2 dest=/etc/apache2/sites-available/david.bell.id.au.conf
+#   notify: restart apache
+# - name: Enable Apache vhost for david.bell.id.au
+#   command: /usr/sbin/a2ensite david.bell.id.au creates=/etc/apache2/sites-enabled/david.bell.id.au.conf
+#   notify: restart apache
