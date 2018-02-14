@@ -45,6 +45,9 @@ banaction = {{ service.banaction }}
 {% if service.bantime is defined %}
 bantime = {{ service.bantime }}
 {% endif %}
+{% if service.findtime is defined %}
+findtime= {{ service.findtime }}
+{% endif %}
 
 {% endfor %}
 {% endif %}
