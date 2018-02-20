@@ -1,0 +1,10 @@
+---
+- name: Remove default Apache vhost configuration
+  command: /usr/sbin/a2dissite 000-default removes=/etc/apache2/sites-enabled/000-default.conf
+  notify: restart apache
+- name: Create zzz_catchall.conf Apache vhost configuration
+  template: src=zzz_catchall.conf.j2 dest=/etc/apache2/sites-available/zzz_catchall.conf
+  notify: restart apache
+- name: Enable Apache vhost for zzz_catchall
+  command: /usr/sbin/a2ensite zzz_catchall creates=/etc/apache2/sites-enabled/zzz_catchall.conf
+  notify: restart apache
