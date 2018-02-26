@@ -4,6 +4,9 @@
 	ServerAlias *
 
 	RedirectMatch 404 /.*
+
+	ErrorLog ${APACHE_LOG_DIR}/zzz_catchall.error.log
+	CustomLog ${APACHE_LOG_DIR}/zzz_catchall.access.log combined
 </VirtualHost>
 <IfModule mod_ssl.c>
 	<VirtualHost _default_:443>
