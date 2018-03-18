@@ -59,8 +59,8 @@
 		# Referrer-Policy https://scotthelme.co.uk/a-new-security-header-referrer-policy/ 2017-11-02
 		Header always set Referrer-Policy "same-origin"
 
-		# HSTS (mod_headers is required) (15768000 seconds = 6 months)
-		Header always set Strict-Transport-Security "max-age=15768000"
+		# HSTS (mod_headers is required) (63072000 seconds = 2 years)
+		Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
 	</VirtualHost>
 </IfModule>
 
