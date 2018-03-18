@@ -28,7 +28,8 @@ function gh() {
             origin_url=$(git remote get-url $origin)
             origin_user=${origin_url#*\:}
             origin_user=${origin_user%%\/*}
-            echo PR: $upstream_url/compare/master...$origin_user:master
+            origin_branch=$(git rev-parse --abbrev-ref HEAD)
+            echo PR: $upstream_url/compare/master...$origin_user:$origin_branch
         fi
     else
         # Get the URL for the provided remote
