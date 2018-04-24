@@ -40,3 +40,13 @@ function gh() {
         echo $giturl
     fi
 }
+
+alias git=git-wrapper
+function git-wrapper() {
+    # Wraps the standard `git` command to give me a PR URL after every `git push`
+
+    case "$1" in
+        push ) \git $@; gh --pr ;;
+        * ) \git $@ ;;
+    esac
+}
