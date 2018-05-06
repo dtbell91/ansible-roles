@@ -20,5 +20,5 @@
 - name: renew letsencrypt cert
   cron:
     name: "letsencrypt certbot renewal"
-    job: "certbot renew"
+    job: certbot renew --pre-hook "/usr/sbin/a2dissite zzz_catchall.conf && /bin/systemctl reload apache2" --post-hook "/usr/sbin/a2ensite zzz_catchall.conf && /bin/systemctl reload apache2"
     special_time: weekly
