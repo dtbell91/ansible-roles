@@ -15,7 +15,8 @@
   apt_repository: repo="deb https://packages.gitlab.com/gitlab/gitlab-ee/debian/ stretch main" state=present
 - name: Install GitLab package
   apt: name="gitlab-ee" state=installed update_cache=yes
-  environment: 
-    external_url: "{{ gitlab_external_url }}"
+- name: add gitlab configuration
+  template: src=gitlab.rb.j2 dest=/etc/gitlab/gitlab.rb
+  notify: reconfigure gitlab
 
 # https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/files/gitlab-config-template/gitlab.rb.template
