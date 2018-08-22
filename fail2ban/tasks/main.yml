@@ -7,6 +7,14 @@
   file: path=/var/log/user.log state=touch owner=root mode=600
   when: roundcubelog.stat.exists == False
 
+- name: Check if Mail log already exists
+  stat: path=/var/log/mail.log
+  register: maillog
+
+- name: touch mail log
+  file: path=/var/log/mail.log state=touch owner=root mode=600
+  when: maillog.stat.exists == False
+
 - name: ensure fail2ban is installed
   apt: name=fail2ban state=installed update_cache=yes cache_valid_time={{cache_valid_time}}
   notify:
