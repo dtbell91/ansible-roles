@@ -46,9 +46,9 @@
 
 		# Various setting set based on report from https://securityheaders.io/?q=david.bell.id.au&hide=on&followRedirects=on 2017-11-02
 		# Set Content Security Policy as per http://cspisawesome.com/content_security_policies 2017-11-02
-		Header always set Content-Security-Policy: "default-src 'self'"
-		Header always set X-Content-Security-Policy: "default-src 'self'"
-		Header always set X-WebKit-CSP: "default-src 'self'"
+		Header always set Content-Security-Policy: "script-src 'self' data: 'unsafe-inline' 'unsafe-eval'"
+		Header always set X-Content-Security-Policy: "script-src 'self' data: 'unsafe-inline' 'unsafe-eval'"
+		Header always set X-WebKit-CSP: "script-src 'self' data: 'unsafe-inline' 'unsafe-eval'"
 
 		# Set X-Frame-Options to SAMEORIGIN being loaded in a frame as per RFC 2017-11-02
 		Header always set X-Frame-Options "SAMEORIGIN"
